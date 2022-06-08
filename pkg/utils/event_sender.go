@@ -17,6 +17,7 @@ limitations under the License.
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -40,7 +41,7 @@ func IsJSON(s string) bool {
 
 // GetFunctionPort returns the port for a function service
 func GetFunctionPort(clientset kubernetes.Interface, namespace, functionName string) (int, error) {
-	svc, err := clientset.CoreV1().Services(namespace).Get(functionName, metav1.GetOptions{})
+	svc, err := clientset.CoreV1().Services(namespace).Get(context.TODO(), functionName, metav1.GetOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("Unable to find the service for function %s", functionName)
 	}

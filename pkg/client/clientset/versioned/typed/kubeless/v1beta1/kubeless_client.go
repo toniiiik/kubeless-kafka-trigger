@@ -16,6 +16,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
+
 	v1beta1 "github.com/kubeless/kafka-trigger/pkg/apis/kubeless/v1beta1"
 	"github.com/kubeless/kafka-trigger/pkg/client/clientset/versioned/scheme"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
@@ -68,7 +70,8 @@ func setConfigDefaults(config *rest.Config) error {
 	gv := v1beta1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+	codec := scheme.Codecs.LegacyCodec(gv)
+	config.NegotiatedSerializer = serializer.NegotiatedSerializerWrapper(runtime.SerializerInfo{Serializer: codec})
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()

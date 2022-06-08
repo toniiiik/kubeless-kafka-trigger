@@ -16,6 +16,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
+
 	v1beta1 "github.com/kubeless/kafka-trigger/pkg/apis/kubeless/v1beta1"
 	scheme "github.com/kubeless/kafka-trigger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,7 +67,7 @@ func (c *kafkaTriggers) Get(name string, options v1.GetOptions) (result *v1beta1
 		Resource("kafkatriggers").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -77,7 +79,7 @@ func (c *kafkaTriggers) List(opts v1.ListOptions) (result *v1beta1.KafkaTriggerL
 		Namespace(c.ns).
 		Resource("kafkatriggers").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -89,7 +91,7 @@ func (c *kafkaTriggers) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Namespace(c.ns).
 		Resource("kafkatriggers").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Watch()
+		Watch(context.TODO())
 }
 
 // Create takes the representation of a kafkaTrigger and creates it.  Returns the server's representation of the kafkaTrigger, and an error, if there is any.
@@ -99,7 +101,7 @@ func (c *kafkaTriggers) Create(kafkaTrigger *v1beta1.KafkaTrigger) (result *v1be
 		Namespace(c.ns).
 		Resource("kafkatriggers").
 		Body(kafkaTrigger).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -112,7 +114,7 @@ func (c *kafkaTriggers) Update(kafkaTrigger *v1beta1.KafkaTrigger) (result *v1be
 		Resource("kafkatriggers").
 		Name(kafkaTrigger.Name).
 		Body(kafkaTrigger).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -124,7 +126,7 @@ func (c *kafkaTriggers) Delete(name string, options *v1.DeleteOptions) error {
 		Resource("kafkatriggers").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -135,7 +137,7 @@ func (c *kafkaTriggers) DeleteCollection(options *v1.DeleteOptions, listOptions 
 		Resource("kafkatriggers").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -148,7 +150,7 @@ func (c *kafkaTriggers) Patch(name string, pt types.PatchType, data []byte, subr
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }

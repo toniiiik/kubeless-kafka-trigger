@@ -17,6 +17,7 @@ limitations under the License.
 package utils
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -28,17 +29,18 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/api/autoscaling/v2beta1"
-	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	clientsetAPIExtensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	corev1 "k8s.io/api/core/v1"
+
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	monitoringv1alpha1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1alpha1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
 
 	// Auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -211,7 +213,7 @@ func doRESTReq(restIface rest.Interface, groupVersion, verb, resource, elem, nam
 	default:
 		return fmt.Errorf("Verb %s not supported", verb)
 	}
-	rawResponse, err := req.AbsPath("apis", groupVersion, "namespaces", namespace, resource).DoRaw()
+	rawResponse, err := req.AbsPath("apis", groupVersion, "namespaces", namespace, resource).DoRaw(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -226,7 +228,7 @@ func doRESTReq(restIface rest.Interface, groupVersion, verb, resource, elem, nam
 
 // CreateAutoscale creates HPA object for function
 func CreateAutoscale(client kubernetes.Interface, hpa v2beta1.HorizontalPodAutoscaler) error {
-	_, err := client.AutoscalingV2beta1().HorizontalPodAutoscalers(hpa.ObjectMeta.Namespace).Create(&hpa)
+	_, err := client.AutoscalingV2beta1().HorizontalPodAutoscalers(hpa.ObjectMeta.Namespace).Create(context.TODO(), &hpa, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -236,7 +238,7 @@ func CreateAutoscale(client kubernetes.Interface, hpa v2beta1.HorizontalPodAutos
 
 // DeleteAutoscale deletes an autoscale rule
 func DeleteAutoscale(client kubernetes.Interface, name, ns string) error {
-	err := client.AutoscalingV2beta1().HorizontalPodAutoscalers(ns).Delete(name, &metav1.DeleteOptions{})
+	err := client.AutoscalingV2beta1().HorizontalPodAutoscalers(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return err
 	}
@@ -244,8 +246,8 @@ func DeleteAutoscale(client kubernetes.Interface, name, ns string) error {
 }
 
 // DeleteServiceMonitor cleans the sm if it exists
-func DeleteServiceMonitor(smclient monitoringv1alpha1.MonitoringV1alpha1Client, name, ns string) error {
-	err := smclient.ServiceMonitors(ns).Delete(name, &metav1.DeleteOptions{})
+func DeleteServiceMonitor(smclient monitoringv1.MonitoringV1Client, name, ns string) error {
+	err := smclient.ServiceMonitors(ns).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return err
 	}
@@ -286,7 +288,7 @@ func MergeDeployments(destinationDeployment *v1beta1.Deployment, sourceDeploymen
 
 // GetAnnotationsFromCRD gets annotations from a CustomResourceDefinition
 func GetAnnotationsFromCRD(clientset clientsetAPIExtensions.Interface, name string) (map[string]string, error) {
-	crd, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(name, metav1.GetOptions{})
+	crd, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -303,11 +305,11 @@ func GetRandString(n int) (string, error) {
 }
 
 // GetSecretsAsLocalObjectReference returns a list of LocalObjectReference based on secret names
-func GetSecretsAsLocalObjectReference(secrets ...string) []v1.LocalObjectReference {
-	res := []v1.LocalObjectReference{}
+func GetSecretsAsLocalObjectReference(secrets ...string) []corev1.LocalObjectReference {
+	res := []corev1.LocalObjectReference{}
 	for _, secret := range secrets {
 		if secret != "" {
-			res = append(res, v1.LocalObjectReference{Name: secret})
+			res = append(res, corev1.LocalObjectReference{Name: secret})
 		}
 	}
 	return res
